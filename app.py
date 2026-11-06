@@ -4,19 +4,31 @@ import streamlit as st
 from database import init_db
 from auth.authentication import register_user, login_user
 from auth.citizen_home import show_citizen_home
+from auth.profile import show_profile
 
 
-# Page configuration
+# ----------------------------------
+# PAGE CONFIGURATION
+# ----------------------------------
+
 st.set_page_config(
     page_title="CommunityConnect",
     page_icon="🏘️",
     layout="centered"
 )
 
-# Initialize database
+
+# ----------------------------------
+# INITIALIZE DATABASE
+# ----------------------------------
+
 init_db()
 
-# Session initialization
+
+# ----------------------------------
+# SESSION STATE
+# ----------------------------------
+
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
@@ -27,31 +39,54 @@ if "page" not in st.session_state:
     st.session_state.page = "home"
 
 
-# Show citizen dashboard after login
+# ----------------------------------
+# APPLICATION HEADER
+# ----------------------------------
+
+st.title("🏘️ CommunityConnect")
+
+st.caption("Your Voice. Your Community. Your Change.")
+
+st.write(
+    "Report community problems and help "
+    "make your neighbourhood better."
+)
+
+st.divider()
+
+
+# ----------------------------------
+# LOGGED-IN CITIZEN SECTION
+# ----------------------------------
+
 if st.session_state.logged_in:
 
-    show_citizen_home(st.session_state.user)
+    current_user = st.session_state.user
+
+    if st.session_state.page == "profile":
+
+        show_profile(current_user)
+
+    else:
+
+        # Dashboard is called only ONCE
+        show_citizen_home(current_user)
 
 
-# Show registration and login pages
+# ----------------------------------
+# REGISTRATION AND LOGIN SECTION
+# ----------------------------------
+
 else:
-
-    st.title("🏘️ CommunityConnect")
-
-    st.subheader("Your Voice. Your Community. Your Change.")
-
-    st.write(
-        "Report community problems and help "
-        "make your neighbourhood better."
-    )
-
-    st.divider()
 
     register_tab, login_tab = st.tabs(
         ["📝 Register", "🔐 Login"]
     )
 
-    # Registration
+    # ----------------------------------
+    # CITIZEN REGISTRATION
+    # ----------------------------------
+
     with register_tab:
 
         st.subheader("Create Your Citizen Account")
@@ -59,6 +94,7 @@ else:
         with st.form("registration_form"):
 
             name = st.text_input("Full Name")
+
             email = st.text_input("Email Address")
 
             password = st.text_input(
@@ -78,7 +114,10 @@ else:
 
             if register_button:
 
-                if password != confirm_password:
+                if not name.strip() or not email.strip():
+                    st.error("Please enter your name and email.")
+
+                elif password != confirm_password:
                     st.error("Passwords do not match.")
 
                 else:
@@ -90,13 +129,22 @@ else:
                     )
 
                     if success:
+
                         st.success(message)
-                        st.info("Please log in now.")
+
+                        st.info(
+                            "Your account has been created. "
+                            "Please log in using the Login tab."
+                        )
 
                     else:
+
                         st.error(message)
 
-    # Login
+    # ----------------------------------
+    # CITIZEN LOGIN
+    # ----------------------------------
+
     with login_tab:
 
         st.subheader("Citizen Login")
@@ -125,14 +173,24 @@ else:
                 if success:
 
                     st.session_state.logged_in = True
+
                     st.session_state.user = user
+
                     st.session_state.page = "home"
 
                     st.rerun()
 
                 else:
-                    st.error("Invalid email or password.")
 
+                    st.error(
+                        "Invalid email or password. "
+                        "Please try again."
+                    )
+
+
+# ----------------------------------
+# FOOTER
+# ----------------------------------
 
 st.divider()
 
