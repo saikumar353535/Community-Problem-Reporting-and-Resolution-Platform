@@ -3,6 +3,8 @@ import streamlit as st
 
 from database import init_db
 from auth.authentication import register_user, login_user
+from auth.citizen_home import show_citizen_home
+
 
 # Page configuration
 st.set_page_config(
@@ -14,40 +16,36 @@ st.set_page_config(
 # Initialize database
 init_db()
 
-# Session state
+# Session initialization
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
 if "user" not in st.session_state:
     st.session_state.user = None
 
-
-# Application heading
-st.title("🏘️ CommunityConnect")
-st.subheader("Your Voice. Your Community. Your Change.")
-st.write("Report community problems and help make your neighbourhood better.")
-
-st.divider()
+if "page" not in st.session_state:
+    st.session_state.page = "home"
 
 
-# Logged-in citizen home page
+# Show citizen dashboard after login
 if st.session_state.logged_in:
 
-    user = st.session_state.user
-
-    st.success(f"Welcome, {user['name']}!")
-
-    st.write("You are successfully logged in.")
-    st.info(f"Registered email: {user['email']}")
-
-    if st.button("Logout"):
-        st.session_state.logged_in = False
-        st.session_state.user = None
-        st.rerun()
+    show_citizen_home(st.session_state.user)
 
 
-# Registration and login pages
+# Show registration and login pages
 else:
+
+    st.title("🏘️ CommunityConnect")
+
+    st.subheader("Your Voice. Your Community. Your Change.")
+
+    st.write(
+        "Report community problems and help "
+        "make your neighbourhood better."
+    )
+
+    st.divider()
 
     register_tab, login_tab = st.tabs(
         ["📝 Register", "🔐 Login"]
@@ -62,10 +60,12 @@ else:
 
             name = st.text_input("Full Name")
             email = st.text_input("Email Address")
+
             password = st.text_input(
                 "Create Password",
                 type="password"
             )
+
             confirm_password = st.text_input(
                 "Confirm Password",
                 type="password"
@@ -82,6 +82,7 @@ else:
                     st.error("Passwords do not match.")
 
                 else:
+
                     success, message = register_user(
                         name,
                         email,
@@ -90,7 +91,7 @@ else:
 
                     if success:
                         st.success(message)
-                        st.info("Please go to the Login tab.")
+                        st.info("Please log in now.")
 
                     else:
                         st.error(message)
@@ -103,6 +104,7 @@ else:
         with st.form("login_form"):
 
             login_email = st.text_input("Email Address")
+
             login_password = st.text_input(
                 "Password",
                 type="password"
@@ -121,10 +123,11 @@ else:
                 )
 
                 if success:
+
                     st.session_state.logged_in = True
                     st.session_state.user = user
+                    st.session_state.page = "home"
 
-                    st.success("Login successful!")
                     st.rerun()
 
                 else:
@@ -133,4 +136,6 @@ else:
 
 st.divider()
 
-st.caption("CommunityConnect | Building Better Communities Together")
+st.caption(
+    "CommunityConnect | Building Better Communities Together"
+)
